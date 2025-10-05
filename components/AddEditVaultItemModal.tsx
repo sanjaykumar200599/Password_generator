@@ -2,11 +2,30 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { encryptData } from '@/lib/crypto';
 
-export default function AddEditVaultItemModal({ item, onClose, onSave }) {
+// 1. Define the structure of a decrypted item. This should match the one in your dashboard page.
+interface DecryptedVaultItem {
+  _id: string;
+  title: string;
+  username: string;
+  password: string;
+  url: string;
+  notes: string;
+  tags: string[];
+}
+
+// 2. Define the props for this component
+interface AddEditVaultItemModalProps {
+  item: DecryptedVaultItem | null; // 'item' can be null when creating a new entry
+  onClose: () => void;
+  onSave: () => void;
+}
+
+// 3. Apply the props type to the function signature
+export default function AddEditVaultItemModal({ item, onClose, onSave }: AddEditVaultItemModalProps) {
   const { encryptionKey } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
@@ -20,7 +39,7 @@ export default function AddEditVaultItemModal({ item, onClose, onSave }) {
   const isEditing = !!item;
 
   useEffect(() => {
-    if (isEditing) {
+    if (isEditing && item) { // TypeScript now knows 'item' is not null here
       setFormData({
         title: item.title || '',
         username: item.username || '',
@@ -32,12 +51,13 @@ export default function AddEditVaultItemModal({ item, onClose, onSave }) {
     }
   }, [item, isEditing]);
 
-  const handleChange = (e) => {
+  // 4. Add types to the event handlers
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!encryptionKey) {
       alert('Encryption key is not available. Please log in again.');
@@ -46,7 +66,6 @@ export default function AddEditVaultItemModal({ item, onClose, onSave }) {
 
     const tagsArray = formData.tags.split(',').map(tag => tag.trim()).filter(Boolean);
 
-    // Encrypt all data before sending to the server
     const encryptedData = {
       title: encryptData(formData.title, encryptionKey),
       username: encryptData(formData.username, encryptionKey),
@@ -56,7 +75,7 @@ export default function AddEditVaultItemModal({ item, onClose, onSave }) {
       tags: tagsArray.map(tag => encryptData(tag, encryptionKey)),
     };
 
-    const url = isEditing ? `/api/vault/${item._id}` : '/api/vault';
+    const url = isEditing && item ? `/api/vault/${item._id}` : '/api/vault';
     const method = isEditing ? 'PUT' : 'POST';
 
     try {

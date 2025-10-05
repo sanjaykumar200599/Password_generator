@@ -5,7 +5,27 @@
 import { useState } from 'react';
 import { Copy, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 
-export default function VaultItemComponent({ item, onEdit, onDelete }) {
+// 1. Define the structure for the 'item' prop.
+// This should match the type used in your dashboard page.
+interface DecryptedVaultItem {
+  _id: string;
+  title: string;
+  username: string;
+  password: string;
+  url: string;
+  notes: string;
+  tags: string[];
+}
+
+// 2. Define the props for the entire component.
+interface VaultItemProps {
+  item: DecryptedVaultItem;
+  onEdit: () => void;
+  onDelete: () => void;
+}
+
+// 3. Apply the props type to the function signature.
+export default function VaultItemComponent({ item, onEdit, onDelete }: VaultItemProps) {
   const [copied, setCopied] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
@@ -20,11 +40,12 @@ export default function VaultItemComponent({ item, onEdit, onDelete }) {
   };
   
   const handleDelete = async () => {
+    // TypeScript now knows `item.title` and `item._id` are strings.
     if (window.confirm(`Are you sure you want to delete "${item.title}"?`)) {
       try {
         const res = await fetch(`/api/vault/${item._id}`, { method: 'DELETE' });
         if (res.ok) {
-          onDelete();
+          onDelete(); // TypeScript knows this is a function.
         } else {
           alert('Failed to delete item.');
         }
@@ -39,6 +60,7 @@ export default function VaultItemComponent({ item, onEdit, onDelete }) {
     <div className="p-4 bg-card rounded-lg shadow border border-border">
       <div className="flex justify-between items-start">
         <div>
+          {/* All 'item' properties are now type-safe */}
           <h4 className="font-bold text-lg">{item.title}</h4>
           <p className="text-sm text-muted-foreground">{item.username}</p>
           {item.url && <a href={item.url.startsWith('http') ? item.url : `//${item.url}`} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline break-all">{item.url}</a>}
