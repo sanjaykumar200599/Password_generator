@@ -1,5 +1,3 @@
-// app/dashboard/page.tsx
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -10,7 +8,6 @@ import PasswordGenerator from '@/components/PasswordGenerator';
 import VaultItemComponent from '@/components/VaultItem';
 import AddEditVaultItemModal from '@/components/AddEditVaultItemModal';
 
-// Define the structure of a decrypted vault item
 interface DecryptedVaultItem {
   _id: string;
   title: string;
@@ -21,7 +18,6 @@ interface DecryptedVaultItem {
   tags: string[];
 }
 
-// Define the structure of an encrypted vault item (as it comes from the API)
 interface EncryptedVaultItem {
   _id: string;
   title: string;
@@ -37,8 +33,6 @@ interface EncryptedVaultItem {
 
 export default function DashboardPage() {
   const { encryptionKey, isAuthenticated } = useAuth();
-  
-  // Use the types when declaring state
   const [items, setItems] = useState<EncryptedVaultItem[]>([]);
   const [decryptedItems, setDecryptedItems] = useState<DecryptedVaultItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -62,9 +56,7 @@ export default function DashboardPage() {
     }
   };
 
-  useEffect(() => {
-    fetchItems();
-  }, [isAuthenticated]);
+  useEffect(() => { fetchItems(); }, [isAuthenticated]);
 
   useEffect(() => {
     if (items.length > 0 && encryptionKey) {
@@ -84,7 +76,7 @@ export default function DashboardPage() {
           console.error("Failed to decrypt item:", item._id, e);
           return null;
         }
-      }).filter((item): item is DecryptedVaultItem => item !== null); // Type guard to filter out nulls
+      }).filter((item): item is DecryptedVaultItem => item !== null);
       setDecryptedItems(decrypted);
     } else {
       setDecryptedItems([]);
@@ -93,17 +85,16 @@ export default function DashboardPage() {
 
   const filteredItems = useMemo(() => {
     if (!searchTerm) return decryptedItems;
-    const lowercasedTerm = searchTerm.toLowerCase();
+    const lower = searchTerm.toLowerCase();
     return decryptedItems.filter(item =>
-      item.title.toLowerCase().includes(lowercasedTerm) ||
-      item.username.toLowerCase().includes(lowercasedTerm) ||
-      item.url.toLowerCase().includes(lowercasedTerm) ||
-      item.tags.some(tag => tag.toLowerCase().includes(lowercasedTerm))
+      item.title.toLowerCase().includes(lower) ||
+      item.username.toLowerCase().includes(lower) ||
+      item.url.toLowerCase().includes(lower) ||
+      item.tags.some(tag => tag.toLowerCase().includes(lower))
     );
   }, [searchTerm, decryptedItems]);
-  
+
   const handleExport = () => {
-    // ... (rest of the code remains the same as it correctly uses the 'items' (encrypted) state)
     const dataStr = JSON.stringify({ vaultData: items }, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -115,9 +106,8 @@ export default function DashboardPage() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
-  
+
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    // ... (rest of the code remains the same)
     const file = event.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
@@ -126,7 +116,6 @@ export default function DashboardPage() {
         const content = e.target?.result as string;
         const { vaultData } = JSON.parse(content);
         if (!Array.isArray(vaultData)) throw new Error("Invalid file format");
-        
         const res = await fetch('/api/vault/import', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -145,64 +134,80 @@ export default function DashboardPage() {
       }
     };
     reader.readAsText(file);
-    event.target.value = ''; // Reset file input
+    event.target.value = '';
   };
-  
-  if (!isAuthenticated) {
-    return <div>Loading session...</div>;
-  }
-  
+
+  if (!isAuthenticated) return <div>Loading session...</div>;
+
   return (
     <>
       <Navbar />
       <div className="container mx-auto p-4 md:p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Panel */}
           <div className="lg:col-span-1 space-y-6">
             <PasswordGenerator />
-            <div className="p-4 bg-card rounded-lg shadow border border-border">
-              <h3 className="text-lg font-semibold mb-3">Manage Vault</h3>
+            <div className="p-4 bg-gray-900 rounded-xl shadow-xl border border-gray-700">
+              <h3 className="text-lg font-semibold mb-3 text-white">Manage Vault</h3>
               <div className="space-y-2">
-                <button onClick={handleExport} className="w-full text-center px-4 py-2 border rounded-md hover:bg-muted">Export Encrypted Vault</button>
-                <label className="w-full text-center block px-4 py-2 border rounded-md hover:bg-muted cursor-pointer">
+                <button
+                  onClick={handleExport}
+                  className="w-full py-2 border rounded-lg text-white hover:bg-gray-800 transition-colors"
+                >
+                  Export Encrypted Vault
+                </button>
+                <label className="w-full block text-center py-2 border rounded-lg text-white hover:bg-gray-800 cursor-pointer transition-colors">
                   Import Encrypted Vault
                   <input type="file" className="hidden" accept=".json" onChange={handleImport} />
                 </label>
               </div>
             </div>
           </div>
+
+          {/* Right Panel */}
           <div className="lg:col-span-2">
             <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-              <input 
-                type="text" 
-                placeholder="Search by title, username, url, or tag..." 
-                className="p-2 border rounded-md w-full bg-input"
-                onChange={(e) => setSearchTerm(e.target.value)} 
+              <input
+                type="text"
+                placeholder="Search by title, username, url, or tag..."
+                className="p-3 border rounded-lg w-full bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/70 transition-all"
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <button onClick={() => { setCurrentItem(null); setIsModalOpen(true); }} className="w-full md:w-auto bg-primary text-primary-foreground px-4 py-2 rounded-md whitespace-nowrap hover:opacity-90">
+              <button
+                onClick={() => { setCurrentItem(null); setIsModalOpen(true); }}
+                className="w-full md:w-auto bg-gradient-to-r from-primary to-secondary text-white px-4 py-2 rounded-lg hover:opacity-90 transition"
+              >
                 + Add Item
               </button>
             </div>
+
             <div className="space-y-4">
-              {isLoading ? <p>Loading vault items...</p> :
-                filteredItems.length > 0 ? (
-                  filteredItems.map(item => (
-                    <VaultItemComponent key={item._id} item={item} onEdit={() => { setCurrentItem(item); setIsModalOpen(true); }} onDelete={fetchItems} />
-                  ))
-                ) : (
-                  <div className="text-center py-10 border-2 border-dashed rounded-lg">
-                    <p className="text-muted-foreground">Your vault is empty.</p>
-                    <p className="text-sm text-muted-foreground">Click "+ Add Item" to get started.</p>
-                  </div>
-                )
-              }
+              {isLoading ? (
+                <p className="text-center text-gray-400 py-10">Loading vault items...</p>
+              ) : filteredItems.length > 0 ? (
+                filteredItems.map(item => (
+                  <VaultItemComponent
+                    key={item._id}
+                    item={item}
+                    onEdit={() => { setCurrentItem(item); setIsModalOpen(true); }}
+                    onDelete={fetchItems}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-10 border-2 border-dashed rounded-xl border-gray-700">
+                  <p className="text-gray-400">Your vault is empty.</p>
+                  <p className="text-sm text-gray-500">Click "+ Add Item" to get started.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
+
         {isModalOpen && (
-          <AddEditVaultItemModal 
-            item={currentItem} 
-            onClose={() => setIsModalOpen(false)} 
-            onSave={fetchItems} 
+          <AddEditVaultItemModal
+            item={currentItem}
+            onClose={() => setIsModalOpen(false)}
+            onSave={fetchItems}
           />
         )}
       </div>
