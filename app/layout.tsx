@@ -1,3 +1,5 @@
+// app/layout.tsx
+
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -25,9 +27,8 @@ export default function RootLayout({
           enableSystem
         >
           <AuthProvider>
-            <main className="min-h-screen bg-background text-foreground">
-              {children}
-            </main>
+            {/* The <main> tag is removed to let pages control their own layout */}
+            {children}
           </AuthProvider>
         </ThemeProvider>
       </body>
