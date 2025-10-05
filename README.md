@@ -3,6 +3,10 @@
 Secure Vault is a web application that allows users to generate strong, unique passwords and save them in a personal, encrypted vault. This project emphasizes privacy-first principles by performing all encryption and decryption on the client-side, ensuring the server never has access to plaintext secrets.
 
 ---
+Deployed Link: https://password-generator-nine-beta-85.vercel.app/
+
+---
+
 How to use:(how to run)
 
 ## Step 1: Create Your Account (Sign Up)
