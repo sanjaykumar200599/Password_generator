@@ -1,5 +1,3 @@
-// lib/db.ts
-
 import mongoose from 'mongoose';
 
 const MONGO_URI = process.env.MONGO_URI;
@@ -8,10 +6,10 @@ if (!MONGO_URI) {
   throw new Error('Please define the MONGO_URI environment variable inside .env.local');
 }
 
-let cached = global.mongoose;
+let cached = (global as any).mongoose;
 
 if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
+  cached = (global as any).mongoose = { conn: null, promise: null };
 }
 
 async function dbConnect() {
@@ -24,11 +22,17 @@ async function dbConnect() {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGO_URI, opts).then((mongoose) => {
+    cached.promise = mongoose.connect(MONGO_URI!, opts).then((mongoose) => {
       return mongoose;
     });
   }
-  cached.conn = await cached.promise;
+  try {
+    cached.conn = await cached.promise;
+  } catch (e) {
+    cached.promise = null;
+    throw e;
+  }
+
   return cached.conn;
 }
 

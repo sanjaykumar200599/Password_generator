@@ -1,5 +1,3 @@
-// lib/models/User.ts
-
 import mongoose from 'mongoose';
 
 const UserSchema = new mongoose.Schema({
@@ -7,6 +5,7 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please provide an email.'],
     unique: true,
+    match: [/.+\@.+\..+/, 'Please fill a valid email address'],
   },
   password: {
     type: String,
